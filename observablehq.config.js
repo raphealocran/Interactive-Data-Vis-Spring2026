@@ -13,7 +13,7 @@ export default {
       pages: [
         { name: "Intro to Web Development", path: "/lessons/1_intro_to_web_development" },
         { name: "Working in Cursor", path: "/lessons/2_working_in_cursor" },
-        // { name: "Intro to Observable Framework", path: "/lessons/3_intro_to_observable_framework" },
+        { name: "Intro to Observable Framework", path: "/lessons/3_intro_to_observable_framework" },
         // { name: "Intro to Observable Plot", path: "/lessons/4_intro_to_observable_plot" },
       ]
     },
@@ -29,8 +29,8 @@ export default {
       name: "Lab 1: Prolific Pollinators",
       open: false,
       pages: [
-        // { name: "Instructions", path: "/lab_1/readme" },
-        // { name: "Dashboard", path: "/lab_1/index" },
+        { name: "Instructions", path: "/lab_1/readme" },
+        { name: "Dashboard", path: "/lab_1/index" },
       ],
     },
     {
