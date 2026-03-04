@@ -49,7 +49,7 @@ _Note_: while Cursor and VS Code are applications, the other softwares are insta
 You can read more about `forking`, `syncing`, and the overall github flow [here](https://help.github.com/en/github/getting-started-with-github/fork-a-repo).
 
 ### 1. Fork the class page
-On Gitub, within to our [main repository](https://github.com/InteractiveDataVis/Interactive-Data-Vis-Fall2025.git) and [`fork`](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) this repository into your own account.
+On Gitub, within to our [main repository](https://github.com/InteractiveDataVis/Interactive-Data-Vis-Spring2026.git) and [`fork`](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) this repository into your own account.
 
 To do this, click on the "fork" button on the top right of this github account.
 
@@ -77,10 +77,10 @@ Copy the link inside there and use it after the `git clone` command in the termi
 $ cd PATH_TO_YOUR/FOLDER
 
 # clone your fork to your local computer
-$ git clone https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Fall2025
+$ git clone https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Spring2026
 
 # `cd` (change directory) into this repository
-$ cd Interactive-Data-Vis-Fall2025
+$ cd Interactive-Data-Vis-Spring2026
 ```
 
 ### 3. Set up remote class repository
@@ -92,8 +92,8 @@ We do this so that you can keep your local branch synced up with the main course
 #See current remote branches:
 
 $ git remote -v
-> origin	https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Fall2025.git (fetch)
-> origin	https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Fall2025.git (push)
+> origin	https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Spring2026.git (fetch)
+> origin	https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Spring2026.git (push)
 
 # currently this is only tracking your version of the repository
 ```
@@ -101,17 +101,17 @@ $ git remote -v
 Add an `upstream` remote branch so you can keep yours synced with the main class repository:
 
 ```sh
-$ git remote add upstream https://github.com/InteractiveDataVis/Interactive-Data-Vis-Fall2025.git
+$ git remote add upstream https://github.com/InteractiveDataVis/Interactive-Data-Vis-Spring2026.git
 ```
 
 Check remote branches again to ensure that the update worked. You should see 2 sets of branches, `origin` which links back to your fork, and `upstream` which references back to the course repository:
 
 ```sh
 $ git remote -v
-> origin	https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Fall2025.git (fetch)
-> origin	https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Fall2025.git (push)
-> upstream	https://github.com/InteractiveDataVis/Interactive-Data-Vis-Fall2025.git (fetch)
-> upstream	https://github.com/InteractiveDataVis/Interactive-Data-Vis-Fall2025.git (push)
+> origin	https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Spring2026.git (fetch)
+> origin	https://github.com/[YOUR_USERNAME]/Interactive-Data-Vis-Spring2026.git (push)
+> upstream	https://github.com/InteractiveDataVis/Interactive-Data-Vis-Spring2026.git (fetch)
+> upstream	https://github.com/InteractiveDataVis/Interactive-Data-Vis-Spring2026.git (push)
 
 # now we are tracking both the original and your version of the repository
 ```
