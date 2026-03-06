@@ -14,6 +14,7 @@ export default {
         { name: "Intro to Web Development", path: "/lessons/1_intro_to_web_development" },
         { name: "Working in Cursor", path: "/lessons/2_working_in_cursor" },
         { name: "Intro to Observable Framework", path: "/lessons/3_intro_to_observable_framework" },
+        { name: "Confirming Spring Upstream", path: "/lessons/4_confirming_spring_upstream" },
         // { name: "Intro to Observable Plot", path: "/lessons/4_intro_to_observable_plot" },
       ]
     },
