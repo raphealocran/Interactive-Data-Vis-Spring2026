@@ -16,6 +16,7 @@ export default {
         { name: "Intro to Observable Framework", path: "/lessons/3_intro_to_observable_framework" },
         { name: "Confirming Spring Upstream", path: "/lessons/4_confirming_spring_upstream" },
         { name: "Intro to Observable Plot", path: "/lessons/5_intro_to_observable_plot" },
+        { name: "Transforms and Data Manipulation", path: "/lessons/6_transforms_and_data_manipulation" },
       ]
     },
     {
