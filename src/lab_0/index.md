@@ -7,6 +7,10 @@ This page is where you can iterate. Follow the lab instructions in the [readme.m
 
 ## MARKDOWN
 
+```
+code block
+```
+
 <table>
 <thead>
 <tr>
@@ -37,8 +41,11 @@ This page is where you can iterate. Follow the lab instructions in the [readme.m
 </tr>
 <tr>
 <td colspan="2" style="text-align: center;">
-<a href="https://github.com/raphealocran" target="_blank">🔗 My GitHub Profile</a>
+<a href="https://github.com/raphealocran" target="_blank"> My GitHub Profile</a>
 </td>
 </tr>
 </tbody>
 </table>
+
+<img src="https://via.placeholder.com/160" 
+     style="border-radius: 12px; max-width: 160px; margin: 12px 0;">
