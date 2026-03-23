@@ -17,39 +17,98 @@ display(data);
 
 display("Question 1: Body Mass and Wing Span Distribution by Species");
 
+const bodyMassGroups = {};
+
+for (let i = 0; i < data.length; i++) {
+  const species = data[i].pollinator_species;
+  const bodyMass = data[i].avg_body_mass_g;
+  
+  if (!bodyMassGroups[species]) {
+    bodyMassGroups[species] = {
+      totalMass: 0,
+      count: 0
+    };
+  }
+  
+  bodyMassGroups[species].totalMass = bodyMassGroups[species].totalMass + bodyMass;
+  bodyMassGroups[species].count = bodyMassGroups[species].count + 1;
+}
+
+const bodyMassData = [];
+const speciesNames = Object.keys(bodyMassGroups);
+
+for (let i = 0; i < speciesNames.length; i++) {
+  const species = speciesNames[i];
+  const avgMass = bodyMassGroups[species].totalMass / bodyMassGroups[species].count;
+  
+  bodyMassData.push({
+    species: species,
+    avgBodyMass: avgMass
+  });
+}
+
 const bodyMassPlot = Plot.plot({
-  title: "Body Mass by Pollinator Species",
+  title: "Average Body Mass by Pollinator Species",
   marginLeft: 80,
   y: {
-    label: "Body Mass (grams)"
+    label: "Average Body Mass (grams)"
   },
   x: {
     label: "Pollinator Species"
   },
   marks: [
-    Plot.dot(data, {
-      x: "pollinator_species",
-      y: "avg_body_mass_g",
-      fill: "pollinator_species"
+    Plot.barY(bodyMassData, {
+      x: "species",
+      y: "avgBodyMass",
+      fill: "species"
     })
   ]
 });
 display(bodyMassPlot);
 
+const wingSpanGroups = {};
+
+for (let i = 0; i < data.length; i++) {
+  const species = data[i].pollinator_species;
+  const wingSpan = data[i].avg_wing_span_mm;
+  
+  if (!wingSpanGroups[species]) {
+    wingSpanGroups[species] = {
+      totalSpan: 0,
+      count: 0
+    };
+  }
+  
+  wingSpanGroups[species].totalSpan = wingSpanGroups[species].totalSpan + wingSpan;
+  wingSpanGroups[species].count = wingSpanGroups[species].count + 1;
+}
+
+const wingSpanData = [];
+
+for (let i = 0; i < speciesNames.length; i++) {
+  const species = speciesNames[i];
+  const avgSpan = wingSpanGroups[species].totalSpan / wingSpanGroups[species].count;
+  
+  wingSpanData.push({
+    species: species,
+    avgWingSpan: avgSpan
+  });
+}
+
 const wingSpanPlot = Plot.plot({
-  title: "Wing Span by Pollinator Species",
+  title: "Average Wing Span by Pollinator Species",
   marginLeft: 80,
   y: {
-    label: "Wing Span (millimeters)"
+    label: "Average Wing Span (millimeters)"
   },
   x: {
     label: "Pollinator Species"
   },
   marks: [
-    Plot.dot(data, {
-      x: "pollinator_species",
-      y: "avg_wing_span_mm",
-      fill: "pollinator_species"
+    Plot.barY(wingSpanData, {
+      x: "species",
+      y: "avgWingSpan",
+      fill: "species"
     })
   ]
 });
@@ -117,24 +176,6 @@ display("Best weather condition: " + bestWeather.weather + " with " + bestWeathe
 if (data[0] && data[0].temperature !== undefined) {
   display("Temperature Analysis:");
   
-  const tempPlot = Plot.plot({
-    title: "Temperature vs Pollinator Visits",
-    x: {
-      label: "Temperature (Celsius)"
-    },
-    y: {
-      label: "Visit Count"
-    },
-    marks: [
-      Plot.dot(data, {
-        x: "temperature",
-        y: "visit_count",
-        fill: "weather_condition"
-      })
-    ]
-  });
-  display(tempPlot);
-  
   const tempGroups = {};
   
   for (let i = 0; i < data.length; i++) {
@@ -142,33 +183,64 @@ if (data[0] && data[0].temperature !== undefined) {
     const visits = data[i].visit_count;
     
     const tempGroup = Math.round(temp / 5) * 5;
+    const rangeLabel = tempGroup + "°C";
     
-    if (!tempGroups[tempGroup]) {
-      tempGroups[tempGroup] = {
+    if (!tempGroups[rangeLabel]) {
+      tempGroups[rangeLabel] = {
         totalVisits: 0,
-        numberOfObservations: 0
+        numberOfObservations: 0,
+        tempValue: tempGroup
       };
     }
     
-    tempGroups[tempGroup].totalVisits = tempGroups[tempGroup].totalVisits + visits;
-    tempGroups[tempGroup].numberOfObservations = tempGroups[tempGroup].numberOfObservations + 1;
+    tempGroups[rangeLabel].totalVisits = tempGroups[rangeLabel].totalVisits + visits;
+    tempGroups[rangeLabel].numberOfObservations = tempGroups[rangeLabel].numberOfObservations + 1;
   }
   
-  let bestTemp = null;
-  let bestTempAvg = 0;
+  const tempData = [];
+  const tempLabels = Object.keys(tempGroups);
   
-  const tempRanges = Object.keys(tempGroups);
-  for (let i = 0; i < tempRanges.length; i++) {
-    const temp = tempRanges[i];
-    const avgVisits = tempGroups[temp].totalVisits / tempGroups[temp].numberOfObservations;
+  for (let i = 0; i < tempLabels.length; i++) {
+    const label = tempLabels[i];
+    const avgVisits = tempGroups[label].totalVisits / tempGroups[label].numberOfObservations;
     
-    if (avgVisits > bestTempAvg) {
-      bestTempAvg = avgVisits;
-      bestTemp = temp;
+    tempData.push({
+      temperatureRange: label,
+      avgVisits: avgVisits,
+      sortValue: tempGroups[label].tempValue
+    });
+  }
+  
+  tempData.sort(function(a, b) {
+    return a.sortValue - b.sortValue;
+  });
+  
+  const tempPlot = Plot.plot({
+    title: "Average Pollinator Visits by Temperature Range",
+    y: {
+      label: "Average Number of Visits"
+    },
+    x: {
+      label: "Temperature Range"
+    },
+    marks: [
+      Plot.barY(tempData, {
+        x: "temperatureRange",
+        y: "avgVisits",
+        fill: "temperatureRange"
+      })
+    ]
+  });
+  display(tempPlot);
+  
+  let bestTemp = tempData[0];
+  for (let i = 1; i < tempData.length; i++) {
+    if (tempData[i].avgVisits > bestTemp.avgVisits) {
+      bestTemp = tempData[i];
     }
   }
   
-  display("Optimal temperature range: Around " + bestTemp + " degrees Celsius with " + bestTempAvg.toFixed(1) + " average visits");
+  display("Optimal temperature range: " + bestTemp.temperatureRange + " with " + bestTemp.avgVisits.toFixed(1) + " average visits");
 }
 
 display("Question 3: Flower Nectar Production Analysis");
