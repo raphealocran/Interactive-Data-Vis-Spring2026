@@ -8,7 +8,7 @@ This page is where you can iterate. Follow the lab instructions in the [readme.m
 ## MARKDWON 
 
 ```js
-const data = await FileAttachment("lab_1/data/pollinator_activity_data.csv").csv({ typed: true });
+const data = await FileAttachment("data/pollinator_activity_data.csv").csv({ typed: true });
 
 display("ALL DATA:");
 display(data);
