@@ -104,28 +104,20 @@ let ridershipPlot = Plot.plot({
   x: { label: "Date", type: "utc", tickFormat: "%b %Y" },
   y: { label: "Daily Ridership", grid: true },
   marks: [
-    Plot.binY(
-      { y: "mean" },
+    Plot.lineY(
       processedRidership,
-      {
+      Plot.groupX({ y: "mean" }, {
         x: "date",
         y: "riders",
         thresholds: "months",
         tip: true,
         stroke: "steelblue",
         strokeWidth: 2
-      }
+      })
     ),
-    Plot.line(processedRidership, {
+    Plot.text([{ date: new Date("2025-07-15"), y: avgAfter }], {
       x: "date",
-      y: "riders",
-      stroke: "gray",
-      strokeOpacity: 0.3,
-      tip: true
-    }),
-    Plot.text([{ date: new Date("2025-07-15"), riders: avgAfter }], {
-      x: "date",
-      y: "riders",
+      y: "y",
       text: ["Fare Increase Date"],
       dx: 10,
       dy: -20,
@@ -171,6 +163,7 @@ for (let i = 0; i < local_events.length; i++) {
   display("- " + eventName + " at " + eventStation + ": +" + impactAmount + "% ridership");
 }
 ```
+
 ```js
 let stationResponse = [];
 
@@ -178,7 +171,6 @@ for (let station in currentStaffing) {
   let totalTime = 0;
   let incidentCount = 0;
   
-  // Find incidents at this station
   for (let i = 0; i < incidents.length; i++) {
     let incident = incidents[i];
     if (incident.station === station) {
@@ -194,7 +186,7 @@ for (let station in currentStaffing) {
     }
   }
   
-  let avgTime = 20; // default value
+  let avgTime = 20;
   if (incidentCount > 0) {
     avgTime = totalTime / incidentCount;
   }
@@ -286,7 +278,6 @@ let stationNeeds = [];
 for (let station in currentStaffing) {
   let staff = currentStaffing[station];
   
-  // Calculate average ridership for this station
   let ridershipTotal = 0;
   let ridershipCount = 0;
   
@@ -307,14 +298,14 @@ for (let station in currentStaffing) {
     }
   }
   
-  let avgRidership = 5000; // default
+  let avgRidership = 5000;
   if (ridershipCount > 0) {
     avgRidership = ridershipTotal / ridershipCount;
   }
   
   let ridersPerStaff = avgRidership / staff;
   
-  let responseTime = 20; // default
+  let responseTime = 20;
   for (let i = 0; i < stationResponse.length; i++) {
     if (stationResponse[i].name === station) {
       responseTime = stationResponse[i].time;
@@ -354,6 +345,7 @@ stationNeeds.sort(function(a, b) {
   return 0;
 });
 
+// Get top 5
 let topNeeds = [];
 for (let i = 0; i < 5; i++) {
   topNeeds.push(stationNeeds[i]);
