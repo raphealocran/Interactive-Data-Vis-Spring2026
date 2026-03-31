@@ -44,162 +44,368 @@ const currentStaffing = {
   "Astor Pl": 7
 }
 
-console.log("NYC SUBWAY STAFFING ANALYSIS");
-console.log("================================");
-
-console.log("\nQUESTION 1: How did events and fare increase impact ridership?");
-
-let ridershipBefore = 0;
-let ridershipAfter = 0;
-let countBefore = 0;
-let countAfter = 0;
-
+let processedRidership = [];
 for (let i = 0; i < ridership.length; i++) {
-    let record = ridership[i];
-    let date = record.date;
-    let riders = record.ridership_count || record.count || record.ridership;
-    
-    if (date < "2025-07-15") {
-        ridershipBefore = ridershipBefore + riders;
-        countBefore = countBefore + 1;
-    } else {
-        ridershipAfter = ridershipAfter + riders;
-        countAfter = countAfter + 1;
-    }
+  let record = ridership[i];
+  let newRecord = {};
+  newRecord.date = new Date(record.date);
+  newRecord.riders = record.ridership_count;
+  if (newRecord.riders === undefined) {
+    newRecord.riders = record.count;
+  }
+  if (newRecord.riders === undefined) {
+    newRecord.riders = record.ridership;
+  }
+  if (newRecord.riders === undefined) {
+    newRecord.riders = 0;
+  }
+  processedRidership.push(newRecord);
 }
 
-let avgBefore = ridershipBefore / countBefore;
-let avgAfter = ridershipAfter / countAfter;
-let change = ((avgAfter - avgBefore) / avgBefore) * 100;
+processedRidership.sort(function(a, b) {
+  if (a.date < b.date) return -1;
+  if (a.date > b.date) return 1;
+  return 0;
+});
 
-console.log("Fare change: $2.75 to $3.00 on July 15, 2025");
-console.log("Ridership change: " + change.toFixed(1) + "%");
+let beforeData = [];
+let afterData = [];
+let fareDate = new Date("2025-07-15");
 
-console.log("\nEvent impacts:");
+for (let i = 0; i < processedRidership.length; i++) {
+  if (processedRidership[i].date < fareDate) {
+    beforeData.push(processedRidership[i]);
+  } else {
+    afterData.push(processedRidership[i]);
+  }
+}
+
+let beforeSum = 0;
+for (let i = 0; i < beforeData.length; i++) {
+  beforeSum = beforeSum + beforeData[i].riders;
+}
+let avgBefore = beforeSum / beforeData.length;
+
+let afterSum = 0;
+for (let i = 0; i < afterData.length; i++) {
+  afterSum = afterSum + afterData[i].riders;
+}
+let avgAfter = afterSum / afterData.length;
+
+let changeAmount = avgAfter - avgBefore;
+let percentChange = (changeAmount / avgBefore) * 100;
+percentChange = percentChange.toFixed(1);
+
+let ridershipPlot = Plot.plot({
+  title: "Ridership Before and After Fare Increase ($2.75 to $3.00)",
+  subtitle: "Ridership changed by " + percentChange + "% after July 15, 2025",
+  width: 800,
+  height: 400,
+  x: { label: "Date", type: "utc", tickFormat: "%b %Y" },
+  y: { label: "Daily Ridership", grid: true },
+  marks: [
+    Plot.binY(
+      { y: "mean" },
+      processedRidership,
+      {
+        x: "date",
+        y: "riders",
+        thresholds: "months",
+        tip: true,
+        stroke: "steelblue",
+        strokeWidth: 2
+      }
+    ),
+    Plot.line(processedRidership, {
+      x: "date",
+      y: "riders",
+      stroke: "gray",
+      strokeOpacity: 0.3,
+      tip: true
+    }),
+    Plot.text([{ date: new Date("2025-07-15"), riders: avgAfter }], {
+      x: "date",
+      y: "riders",
+      text: ["Fare Increase Date"],
+      dx: 10,
+      dy: -20,
+      fill: "red",
+      fontSize: 11
+    })
+  ]
+});
+
+display(ridershipPlot);
+display("The fare increase from $2.75 to $3.00 happened on July 15, 2025.");
+display("Average ridership changed by " + percentChange + "% after this date.");
+
+display(" ");
+display("Event Impacts on Ridership:");
+
 for (let i = 0; i < local_events.length; i++) {
-    let event = local_events[i];
-    let name = event.event_name || event.name;
-    let station = event.nearby_station || event.station;
-    let impact = event.ridership_impact || event.impact || 0;
-    
-    console.log("- " + name + " at " + station + ": +" + impact + "% ridership");
+  let event = local_events[i];
+  let eventName = event.event_name;
+  if (eventName === undefined) {
+    eventName = event.name;
+  }
+  if (eventName === undefined) {
+    eventName = "Unknown Event";
+  }
+  
+  let eventStation = event.nearby_station;
+  if (eventStation === undefined) {
+    eventStation = event.station;
+  }
+  if (eventStation === undefined) {
+    eventStation = "Unknown Station";
+  }
+  
+  let impactAmount = event.ridership_impact;
+  if (impactAmount === undefined) {
+    impactAmount = event.impact;
+  }
+  if (impactAmount === undefined) {
+    impactAmount = 0;
+  }
+  
+  display("- " + eventName + " at " + eventStation + ": +" + impactAmount + "% ridership");
 }
-
-console.log("\n\nQUESTION 2: Which stations have best/worst response times?");
-
+```
+```js
 let stationResponse = [];
 
 for (let station in currentStaffing) {
-    let totalTime = 0;
-    let incidentCount = 0;
-    
-    for (let i = 0; i < incidents.length; i++) {
-        let incident = incidents[i];
-        if (incident.station === station) {
-            totalTime = totalTime + (incident.response_time || incident.responseTime);
-            incidentCount = incidentCount + 1;
-        }
+  let totalTime = 0;
+  let incidentCount = 0;
+  
+  // Find incidents at this station
+  for (let i = 0; i < incidents.length; i++) {
+    let incident = incidents[i];
+    if (incident.station === station) {
+      let time = incident.response_time;
+      if (time === undefined) {
+        time = incident.responseTime;
+      }
+      if (time === undefined) {
+        time = 0;
+      }
+      totalTime = totalTime + time;
+      incidentCount = incidentCount + 1;
     }
-    
-    let avgTime = incidentCount > 0 ? totalTime / incidentCount : 20;
-    
-    stationResponse.push({
-        name: station,
-        time: avgTime,
-        staff: currentStaffing[station]
-    });
+  }
+  
+  let avgTime = 20; // default value
+  if (incidentCount > 0) {
+    avgTime = totalTime / incidentCount;
+  }
+  
+  stationResponse.push({
+    name: station,
+    time: avgTime,
+    staff: currentStaffing[station]
+  });
 }
 
 stationResponse.sort(function(a, b) {
-    return a.time - b.time;
+  if (a.time < b.time) return -1;
+  if (a.time > b.time) return 1;
+  return 0;
 });
 
-console.log("\nBEST response times (fastest):");
-console.log("1. " + stationResponse[0].name + ": " + stationResponse[0].time.toFixed(1) + " minutes");
-console.log("2. " + stationResponse[1].name + ": " + stationResponse[1].time.toFixed(1) + " minutes");
-console.log("3. " + stationResponse[2].name + ": " + stationResponse[2].time.toFixed(1) + " minutes");
+let bestStations = [];
+for (let i = 0; i < 5; i++) {
+  bestStations.push(stationResponse[i]);
+}
 
-console.log("\nWORST response times (slowest):");
-let last = stationResponse.length - 1;
-console.log("1. " + stationResponse[last].name + ": " + stationResponse[last].time.toFixed(1) + " minutes");
-console.log("2. " + stationResponse[last-1].name + ": " + stationResponse[last-1].time.toFixed(1) + " minutes");
-console.log("3. " + stationResponse[last-2].name + ": " + stationResponse[last-2].time.toFixed(1) + " minutes");
+let worstStations = [];
+for (let i = stationResponse.length - 5; i < stationResponse.length; i++) {
+  worstStations.push(stationResponse[i]);
+}
+worstStations.reverse();
 
-console.log("\n\nQUESTION 3: Which three stations need the most staffing help?");
+let responsePlot = Plot.plot({
+  title: "Emergency Response Times by Station",
+  subtitle: "Best vs Worst Performing Stations",
+  width: 700,
+  height: 400,
+  marginLeft: 120,
+  x: { label: "Response Time (minutes)", grid: true },
+  y: { label: "" },
+  marks: [
+    Plot.barX(bestStations, {
+      y: "name",
+      x: "time",
+      fill: "steelblue",
+      tip: true
+    }),
+    Plot.barX(worstStations, {
+      y: "name",
+      x: "time",
+      fill: "crimson",
+      tip: true
+    }),
+    Plot.ruleX([15], { 
+      stroke: "orange", 
+      strokeWidth: 2, 
+      strokeDash: [5, 5]
+    }),
+    Plot.text([{ time: 15, name: "Target" }], {
+      x: "time",
+      y: "name",
+      text: ["Target: 15 minutes"],
+      dx: -80,
+      dy: -5,
+      fontSize: 10,
+      fill: "orange"
+    })
+  ]
+});
 
+display(responsePlot);
+
+display(" ");
+display("Best Response Times (Fastest):");
+for (let i = 0; i < 3; i++) {
+  let station = bestStations[i];
+  let timeDisplay = station.time.toFixed(1);
+  display((i + 1) + ". " + station.name + ": " + timeDisplay + " minutes");
+}
+
+display(" ");
+display("Worst Response Times (Slowest):");
+for (let i = 0; i < 3; i++) {
+  let station = worstStations[i];
+  let timeDisplay = station.time.toFixed(1);
+  display((i + 1) + ". " + station.name + ": " + timeDisplay + " minutes");
+}
+```
+
+```js
 let stationNeeds = [];
 
 for (let station in currentStaffing) {
-    let staff = currentStaffing[station];
-    
-    let ridershipTotal = 0;
-    let ridershipCount = 0;
-    for (let i = 0; i < ridership.length; i++) {
-        if (ridership[i].station === station) {
-            ridershipTotal = ridershipTotal + (ridership[i].ridership_count || ridership[i].count || ridership[i].ridership);
-            ridershipCount = ridershipCount + 1;
-        }
+  let staff = currentStaffing[station];
+  
+  // Calculate average ridership for this station
+  let ridershipTotal = 0;
+  let ridershipCount = 0;
+  
+  for (let i = 0; i < ridership.length; i++) {
+    if (ridership[i].station === station) {
+      let riders = ridership[i].ridership_count;
+      if (riders === undefined) {
+        riders = ridership[i].count;
+      }
+      if (riders === undefined) {
+        riders = ridership[i].ridership;
+      }
+      if (riders === undefined) {
+        riders = 0;
+      }
+      ridershipTotal = ridershipTotal + riders;
+      ridershipCount = ridershipCount + 1;
     }
-    let avgRidership = ridershipCount > 0 ? ridershipTotal / ridershipCount : 5000;
-    let burden = avgRidership / staff;
-    
-    let responseInfo = stationResponse.find(function(s) {
-        return s.name === station;
-    });
-    let responseTime = responseInfo ? responseInfo.time : 20;
-    
-    let eventCount = 0;
-    for (let i = 0; i < upcoming_events.length; i++) {
-        let eventStation = upcoming_events[i].nearby_station || upcoming_events[i].station;
-        if (eventStation === station) {
-            eventCount = eventCount + 1;
-        }
+  }
+  
+  let avgRidership = 5000; // default
+  if (ridershipCount > 0) {
+    avgRidership = ridershipTotal / ridershipCount;
+  }
+  
+  let ridersPerStaff = avgRidership / staff;
+  
+  let responseTime = 20; // default
+  for (let i = 0; i < stationResponse.length; i++) {
+    if (stationResponse[i].name === station) {
+      responseTime = stationResponse[i].time;
+      break;
     }
-    
-    let burdenScore = burden / 5000;
-    let responseScore = responseTime / 30;
-    let eventScore = eventCount / 5;
-    
-    let needScore = (burdenScore * 0.4) + (responseScore * 0.35) + (eventScore * 0.25);
-    
-    stationNeeds.push({
-        name: station,
-        staff: staff,
-        burden: Math.round(burden),
-        responseTime: responseTime,
-        events: eventCount,
-        score: needScore
-    });
+  }
+  
+  let eventCount = 0;
+  for (let i = 0; i < upcoming_events.length; i++) {
+    let eventStation = upcoming_events[i].nearby_station;
+    if (eventStation === undefined) {
+      eventStation = upcoming_events[i].station;
+    }
+    if (eventStation === station) {
+      eventCount = eventCount + 1;
+    }
+  }
+  
+  let burdenScore = ridersPerStaff / 5000;
+  let responseScore = responseTime / 30;
+  let eventScore = eventCount / 5;
+  let needScore = (burdenScore * 0.5) + (responseScore * 0.3) + (eventScore * 0.2);
+  
+  stationNeeds.push({
+    name: station,
+    staff: staff,
+    ridersPerStaff: Math.round(ridersPerStaff),
+    responseTime: responseTime,
+    events: eventCount,
+    score: needScore
+  });
 }
 
 stationNeeds.sort(function(a, b) {
-    return b.score - a.score;
+  if (a.score > b.score) return -1;
+  if (a.score < b.score) return 1;
+  return 0;
 });
 
-console.log("\nTOP 3 STATIONS NEEDING STAFFING:");
-for (let i = 0; i < 3; i++) {
-    let station = stationNeeds[i];
-    let extraStaff = Math.ceil(station.staff * 0.5);
-    
-    console.log("\n" + (i+1) + ". " + station.name);
-    console.log("   Current staff: " + station.staff);
-    console.log("   Riders per staff: " + station.burden.toLocaleString());
-    console.log("   Response time: " + station.responseTime.toFixed(1) + " minutes");
-    console.log("   Events in 2026: " + station.events);
-    console.log("   RECOMMEND: Add " + extraStaff + " more staff");
+let topNeeds = [];
+for (let i = 0; i < 5; i++) {
+  topNeeds.push(stationNeeds[i]);
 }
 
-console.log("\n\nBONUS: Which station should be the #1 priority?");
+let needsPlot = Plot.plot({
+  title: "Stations with Highest Staffing Needs",
+  subtitle: "Based on ridership, response times, and upcoming events",
+  width: 700,
+  height: 350,
+  marginLeft: 100,
+  x: { label: "Need Score (higher = more urgent)", grid: true },
+  y: { label: "" },
+  marks: [
+    Plot.barX(topNeeds, {
+      y: "name",
+      x: "score",
+      fill: "steelblue",
+      tip: true
+    }),
+    Plot.ruleX([0.6], { 
+      stroke: "orange", 
+      strokeWidth: 1.5, 
+      strokeDash: [4, 4] 
+    }),
+    Plot.text([{ score: 0.6, name: "High Need" }], {
+      x: "score",
+      y: "name",
+      text: ["High Need Threshold"],
+      dx: -80,
+      dy: -5,
+      fontSize: 9,
+      fill: "orange"
+    })
+  ]
+});
 
-let priority = stationNeeds[0];
+display(needsPlot);
 
-console.log("\nPRIORITY STATION: " + priority.name);
-console.log("\nWhy this station?");
-console.log("1. Has " + priority.burden.toLocaleString() + " riders per staff member");
-console.log("2. Response time is " + priority.responseTime.toFixed(1) + " minutes");
-console.log("3. Will host " + priority.events + " major events in summer 2026");
-console.log("4. Currently only has " + priority.staff + " staff members");
+display(" ");
+display("Top 3 Stations Needing Staffing:");
 
-let recommendedStaff = Math.ceil(priority.staff * 1.75);
-console.log("\nRecommendation: Increase staff from " + priority.staff + " to " + recommendedStaff);
+for (let i = 0; i < 3; i++) {
+  let station = topNeeds[i];
+  let extraStaff = Math.ceil(station.staff * 0.5);
+  
+  display(" ");
+  display((i + 1) + ". " + station.name);
+  display("   Current staff: " + station.staff);
+  display("   Riders per staff: " + station.ridersPerStaff);
+  display("   Response time: " + station.responseTime.toFixed(1) + " minutes");
+  display("   Upcoming events: " + station.events);
+  display("   Recommendation: Add " + extraStaff + " more staff");
+}
 ```
