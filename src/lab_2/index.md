@@ -55,210 +55,150 @@ const cutoff = new Date("2025-07-15")
 const beforeRides = []
 const afterRides = []
 
-for (let i = 0; i < parsedRidership.length; i++) {
-  const row = parsedRidership[i]
+parsedRidership.forEach(row => {
   if (row.date < cutoff) beforeRides.push(row.rides)
   else afterRides.push(row.rides)
-}
+})
 
-function getAverage(arr) {
-  if (arr.length === 0) return 0
-  return arr.reduce((sum, value) => sum + value, 0) / arr.length
-}
+const getAverage = arr =>
+  arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
 
 const avgBefore = getAverage(beforeRides)
 const avgAfter = getAverage(afterRides)
-const percentChange = avgBefore === 0 ? 0 : ((avgAfter - avgBefore) / avgBefore * 100).toFixed(1)
+
+const percentChange =
+  avgBefore === 0
+    ? 0
+    : ((avgAfter - avgBefore) / avgBefore * 100).toFixed(1)
 
 const eventDates = local_events.map(e => ({
-  date: new Date(e.date),
-  name: e.event_name,
-  station: e.nearby_station
+  date: new Date(e.date)
 }))
 
 const maxRides = Math.max(...parsedRidership.map(d => d.rides))
 
 const stationTimes = {}
-for (let i = 0; i < incidents.length; i++) {
-  const row = incidents[i]
+
+incidents.forEach(row => {
   const station = row.station
   const time = Number(row.response_time_minutes) || 0
   if (!stationTimes[station]) stationTimes[station] = []
   stationTimes[station].push(time)
-}
+})
 
 const stationAvg = Object.entries(stationTimes).map(([station, times]) => ({
   station,
-  avg_time: times.reduce((sum, t) => sum + t, 0) / times.length
-}))
-.sort((a, b) => a.avg_time - b.avg_time)
+  avg_time: getAverage(times)
+})).sort((a, b) => a.avg_time - b.avg_time)
 
-const systemAvg = stationAvg.reduce((sum, d) => sum + d.avg_time, 0) / stationAvg.length
+const systemAvg = getAverage(stationAvg.map(d => d.avg_time))
+
 const worstStations = [...stationAvg].reverse().slice(0, 5)
 const bestStations = stationAvg.slice(0, 5)
 
 const eventCount = {}
-for (let i = 0; i < upcoming_events.length; i++) {
-  const station = upcoming_events[i].nearby_station
-  eventCount[station] = (eventCount[station] || 0) + 1
-}
+upcoming_events.forEach(e => {
+  const s = e.nearby_station
+  eventCount[s] = (eventCount[s] || 0) + 1
+})
 
 const incidentCount = {}
-for (let i = 0; i < incidents.length; i++) {
-  const station = incidents[i].station
-  incidentCount[station] = (incidentCount[station] || 0) + 1
-}
+incidents.forEach(i => {
+  const s = i.station
+  incidentCount[s] = (incidentCount[s] || 0) + 1
+})
 
 const maxIncidents = Math.max(...Object.values(incidentCount), 1)
 
-const staffingNeed = Object.entries(eventCount).map(([station, events]) => {
-  const staff = currentStaffing[station] || 5
-  const incidentsAtStation = incidentCount[station] || 0
-  const incidentRate = incidentsAtStation / maxIncidents
-  const needScore = (events * 2) + (incidentRate * 5) - (staff / 4)
-  return { station, events, staff, incidents: incidentsAtStation, needScore }
-}).sort((a, b) => b.needScore - a.needScore)
+const staffingNeed = Object.entries(eventCount)
+  .map(([station, events]) => {
+    const staff = currentStaffing[station] || 5
+    const incidentsAtStation = incidentCount[station] || 0
+    const incidentRate = incidentsAtStation / maxIncidents
+
+    const needScore = (events * 2) + (incidentRate * 5) - (staff / 4)
+
+    return { station, events, staff, incidents: incidentsAtStation, needScore }
+  })
+  .sort((a, b) => b.needScore - a.needScore)
 
 const topThree = staffingNeed.slice(0, 3)
-```
 
-<!-- Ridership and events timeline -->
-```js
 Plot.plot({
   width: 900,
-  height: 350,
-  x: { label: "Date", type: "utc", tickFormat: "%b %d" },
+  height: 300,
+  x: { label: "Date" },
   y: { label: "Ridership", grid: true },
   marks: [
     Plot.line(parsedRidership, {
       x: "date",
-      y: "rides",
-      stroke: "#2c7fb8",
-      strokeWidth: 2
+      y: "rides"
     }),
-    Plot.ruleX([cutoff], {
-      stroke: "red",
-      strokeDasharray: "4,4"
-    }),
-    Plot.text(
-      [{ x: new Date("2025-07-16"), y: maxRides * 0.9, text: "Fare increase (July 15)" }],
-      { x: "x", y: "y", text: "text", fill: "red", fontSize: 11 }
-    ),
-    Plot.dot(eventDates, {
-      x: "date",
-      y: () => maxRides * 0.8,
-      fill: "orange",
-      r: 5,
-      tip: true
-    })
+    Plot.ruleX([cutoff]),
+    Plot.dot(
+      eventDates.map(d => ({
+        date: d.date,
+        rides: maxRides * 0.8
+      })),
+      {
+        x: "date",
+        y: "rides",
+        fill: "orange",
+        r: 4
+      }
+    )
   ]
 })
-```
 
-<!-- Response-time by station -->
-```js
 Plot.plot({
   width: 900,
-  height: 400,
+  height: 350,
   x: { label: "Response Time (minutes)", grid: true },
   y: { label: "Station" },
   marks: [
     Plot.barX(stationAvg, {
       x: "avg_time",
-      y: "station",
-      fill: "#4299c1",
-      sort: { y: "x", reverse: true }
+      y: "station"
     }),
-    Plot.ruleX([systemAvg], { stroke: "red", strokeDasharray: "3,3" }),
-    Plot.text(
-      [{ x: systemAvg, y: 0, text: `System average: ${systemAvg.toFixed(1)} minutes` }],
-      { x: "x", y: "y", text: "text", fill: "red", fontSize: 11, dx: 5 }
-    )
+    Plot.ruleX([systemAvg])
   ]
 })
-```
-
-<!-- Best/worst station text -->
-```js
-md`### Station response-time ranking (best to worst)`
-for (let i = 0; i < bestStations.length; i++) {
-  display(`${i + 1}. ${bestStations[i].station}: ${bestStations[i].avg_time.toFixed(1)} minutes`)
-}
-
-md`### Worst stations (highest response times)`
-for (let i = 0; i < worstStations.length; i++) {
-  const percentAbove = (worstStations[i].avg_time / systemAvg * 100).toFixed(0)
-  display(`${i + 1}. ${worstStations[i].station}: ${worstStations[i].avg_time.toFixed(1)} minutes (${percentAbove}% above average)`)
-}
-```
-
-<!-- Top 3 staffing need -->
-```js
-md`### Top 3 stations needing staffing upgrades (2026 events)`
-for (let i = 0; i < topThree.length; i++) {
-  const s = topThree[i]
-  display(`${i + 1}. ${s.station} — events: ${s.events}, incidents: ${s.incidents}, staffing: ${s.staff}, need score: ${s.needScore.toFixed(1)}`)
-}
-```
-let ruleMarks = []
-if (topThree.length >= 3) {
-  ruleMarks = [Plot.ruleY([topThree[2].needScore], {
-    stroke: "red",
-    strokeWidth: 1.5,
-    strokeDasharray: "4,2"
-  })]
-}
 
 Plot.plot({
   width: 900,
-  height: 400,
-  x: { label: "Station", tickRotate: 45 },
-  y: { label: "Need Score (higher = more urgent)", grid: true },
+  height: 350,
+  x: { label: "Station" },
+  y: { label: "Need Score", grid: true },
   marks: [
     Plot.barY(staffingNeed, {
       x: "station",
-      y: "needScore",
-      fill: "#e67e22",
-      sort: { x: "y", reverse: true }
+      y: "needScore"
     })
-  ].concat(ruleMarks)
+  ]
 })
 
-for (let i = 0; i < topThree.length; i++) {
-  let s = topThree[i]
-  display((i+1) + ". " + s.station + ": " + s.events + " upcoming events, " + s.incidents + " past incidents, only " + s.staff + " staff members")
-}
+display("Top 5 Best Stations (Fastest Response Times)")
+bestStations.forEach((d, i) => {
+  display(`${i + 1}. ${d.station}: ${d.avg_time.toFixed(1)} min`)
+})
 
-let stationAvgMap = new Map()
+display("Top 5 Worst Stations (Slowest Response Times)")
+worstStations.forEach((d, i) => {
+  display(`${i + 1}. ${d.station}: ${d.avg_time.toFixed(1)} min`)
+})
 
-for (let i = 0; i < stationAvg.length; i++) {
-  stationAvgMap.set(stationAvg[i].station, stationAvg[i].avg_time)
-}
+display("Top 3 Stations Needing Staff")
+topThree.forEach((s, i) => {
+  display(
+    `${i + 1}. ${s.station} — events: ${s.events}, incidents: ${s.incidents}, staff: ${s.staff}, score: ${s.needScore.toFixed(1)}`
+  )
+})
 
-let bonusScores = []
-
-for (let i = 0; i < staffingNeed.length; i++) {
-  let s = staffingNeed[i]
-  let responseTime = stationAvgMap.get(s.station) || 5
-  let bonusScore = s.needScore * (responseTime / 3)
-  bonusScores.push({
-    station: s.station,
-    events: s.events,
-    staff: s.staff,
-    incidents: s.incidents,
-    needScore: s.needScore,
-    responseTime: responseTime,
-    bonusScore: bonusScore
-  })
-}
-
-bonusScores.sort((a, b) => b.bonusScore - a.bonusScore)
-
-let topPriority = bonusScores[0]
+const topPriority = staffingNeed[0]
 
 display("PRIORITY STATION: " + topPriority.station)
-display("")
-display("Why: " + topPriority.events + " major events in Summer 2026, response time of " + topPriority.responseTime.toFixed(1) + " minutes, only " + topPriority.staff + " current staff members")
-display("")
-display("Recommendation: Add 5-7 temporary staff members during event days")
+display(
+  `Why: ${topPriority.events} events, ${topPriority.incidents} incidents, ${topPriority.staff} staff`
+)
+display("Recommendation: Add 5–7 temporary staff during peak periods")
 ```
