@@ -129,6 +129,8 @@ const topThree = staffingNeed.slice(0, 3)
 Plot.plot({
   width: 900,
   height: 300,
+  marginLeft: 80,
+  marginBottom: 60,
   x: { type: "utc", label: "Date", tickFormat: "%b %d" },
   y: { label: "Ridership", grid: true },
   marks: [
@@ -158,6 +160,8 @@ Plot.plot({
 Plot.plot({
   width: 900,
   height: 350,
+  marginLeft: 150,
+  marginBottom: 40,
   x: { label: "Response Time (minutes)", grid: true },
   y: { label: "Station" },
   marks: [
@@ -174,6 +178,7 @@ Plot.plot({
 Plot.plot({
   width: 900,
   height: 350,
+  marginBottom: 50,
   x: { label: "Station" },
   y: { label: "Need Score", grid: true },
   marks: [
