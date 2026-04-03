@@ -217,6 +217,16 @@ staffingNeed.sort((a, b) => b.needScore - a.needScore)
 
 let topThree = staffingNeed.slice(0, 3)
 
+// Only add the rule line if we have at least 3 stations
+let ruleMarks = []
+if (topThree.length >= 3) {
+  ruleMarks = [Plot.ruleY([topThree[2].needScore], {
+    stroke: "red",
+    strokeWidth: 1.5,
+    strokeDasharray: "4,2"
+  })]
+}
+
 Plot.plot({
   width: 900,
   height: 400,
@@ -228,13 +238,8 @@ Plot.plot({
       y: "needScore",
       fill: "#e67e22",
       sort: { x: "y", reverse: true }
-    }),
-    Plot.ruleY([topThree[2].needScore], {
-      stroke: "red",
-      strokeWidth: 1.5,
-      strokeDasharray: "4,2"
     })
-  ]
+  ].concat(ruleMarks)
 })
 
 for (let i = 0; i < topThree.length; i++) {
