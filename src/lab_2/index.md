@@ -178,8 +178,9 @@ Plot.plot({
 Plot.plot({
   width: 900,
   height: 350,
-  marginBottom: 50,
-  x: { label: "Station" },
+  marginBottom: 100,
+  marginLeft: 100,
+  x: { label: "Station", tickRotate: -45 },
   y: { label: "Need Score", grid: true },
   marks: [
     Plot.barY(staffingNeed, {
