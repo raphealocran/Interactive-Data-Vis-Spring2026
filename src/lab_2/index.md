@@ -123,18 +123,20 @@ const staffingNeed = Object.entries(eventCount)
   .sort((a, b) => b.needScore - a.needScore)
 
 const topThree = staffingNeed.slice(0, 3)
+```
 
+```js
 Plot.plot({
   width: 900,
   height: 300,
-  x: { label: "Date" },
+  x: { type: "utc", label: "Date", tickFormat: "%b %d" },
   y: { label: "Ridership", grid: true },
   marks: [
     Plot.line(parsedRidership, {
       x: "date",
       y: "rides"
     }),
-    Plot.ruleX([cutoff]),
+    Plot.ruleX([cutoff], { stroke: "red", strokeDasharray: "4,4" }),
     Plot.dot(
       eventDates.map(d => ({
         date: d.date,
@@ -144,12 +146,15 @@ Plot.plot({
         x: "date",
         y: "rides",
         fill: "orange",
-        r: 4
+        r: 4,
+        tip: d => `${d.date.toISOString().slice(0, 10)} event`
       }
     )
   ]
 })
+```
 
+```js
 Plot.plot({
   width: 900,
   height: 350,
@@ -160,10 +165,12 @@ Plot.plot({
       x: "avg_time",
       y: "station"
     }),
-    Plot.ruleX([systemAvg])
+    Plot.ruleX([systemAvg], { stroke: "red", strokeDasharray: "3,3" })
   ]
 })
+```
 
+```js
 Plot.plot({
   width: 900,
   height: 350,
@@ -176,7 +183,9 @@ Plot.plot({
     })
   ]
 })
+```
 
+```js
 display("Top 5 Best Stations (Fastest Response Times)")
 bestStations.forEach((d, i) => {
   display(`${i + 1}. ${d.station}: ${d.avg_time.toFixed(1)} min`)
@@ -201,4 +210,5 @@ display(
   `Why: ${topPriority.events} events, ${topPriority.incidents} incidents, ${topPriority.staff} staff`
 )
 display("Recommendation: Add 5–7 temporary staff during peak periods")
+```
 ```
