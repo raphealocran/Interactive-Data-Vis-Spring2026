@@ -44,58 +44,76 @@ const currentStaffing = {
   "Astor Pl": 7
 }
 
+const parsedRidership = ridership.map(d => ({
+  ...d,
+  date: new Date(d.date),
+  rides: Number(d.rides) || 0
+}))
+
+let cutoff = new Date("2025-07-15")
+
 let beforeRides = []
 let afterRides = []
 
-for (let i = 0; i < ridership.length; i++) {
-  let row = ridership[i]
-  let date = new Date(row.date)
-  let rides = row.rides
-
-  if (date < new Date("2025-07-15")) {
-    beforeRides.push(rides)
-  } else {
-    afterRides.push(rides)
-  }
+for (let i = 0; i < parsedRidership.length; i++) {
+  let row = parsedRidership[i]
+  if (row.date < cutoff) beforeRides.push(row.rides)
+  else afterRides.push(row.rides)
 }
 
 function getAverage(arr) {
   if (arr.length === 0) return 0
   let sum = 0
-  for (let i = 0; i < arr.length; i++) {
-    sum += arr[i]
-  }
+  for (let i = 0; i < arr.length; i++) sum += arr[i]
   return sum / arr.length
 }
 
 let avgBefore = getAverage(beforeRides)
 let avgAfter = getAverage(afterRides)
-let percentChange = ((avgAfter - avgBefore) / avgBefore * 100).toFixed(1)
 
-let eventDates = local_events.map(e => ({ 
-  date: new Date(e.date), 
+let percentChange = avgBefore === 0 ? 0 : ((avgAfter - avgBefore) / avgBefore * 100).toFixed(1)
+
+let eventDates = local_events.map(e => ({
+  date: new Date(e.date),
   name: e.event_name,
   station: e.station_near
 }))
 
+let maxRides = Math.max(...parsedRidership.map(d => d.rides))
+
 Plot.plot({
-  title: `Ridership Over Summer 2025 (Fare increase on July 15: ${percentChange}% change)`,
   width: 900,
-  height: 400,
+  height: 350,
   x: { label: "Date", type: "utc", tickFormat: "%b %d" },
-  y: { label: "Daily Ridership", grid: true },
+  y: { label: "Ridership", grid: true },
   marks: [
-    Plot.line(ridership, Plot.binX({ y: "mean" }, { x: "date", y: "rides", stroke: "#2c7fb8", strokeWidth: 2 })),
-    
-    Plot.ruleX([new Date("2025-07-15")], { stroke: "red", strokeWidth: 2, strokeDasharray: "4,4" }),
-    
-    Plot.text([{ x: new Date("2025-07-16"), y: 20000, text: "↑ Fare increase" }], 
-      { x: "x", y: "y", text: "text", fill: "red", fontSize: 11 }),
-    
-    Plot.dot(eventDates, { x: "date", y: () => 18000, fill: "orange", r: 6, tip: true }),
-    
-    Plot.text(eventDates.filter(d => d.name.includes("Parade")), 
-      { x: "date", y: () => 23000, text: () => "July 4th Parade", fill: "#e67e22", fontSize: 10, dy: -10 })
+    Plot.line(parsedRidership, {
+      x: "date",
+      y: "rides",
+      stroke: "#2c7fb8",
+      strokeWidth: 2
+    }),
+    Plot.ruleX([cutoff], {
+      stroke: "red",
+      strokeDasharray: "4,4"
+    }),
+    Plot.text(
+      [{ x: new Date("2025-07-16"), y: maxRides * 0.9, text: "Fare increase (July 15)" }],
+      {
+        x: "x",
+        y: "y",
+        text: "text",
+        fill: "red",
+        fontSize: 11
+      }
+    ),
+    Plot.dot(eventDates, {
+      x: "date",
+      y: () => maxRides * 0.8,
+      fill: "orange",
+      r: 5,
+      tip: true
+    })
   ]
 })
 
@@ -104,11 +122,9 @@ let stationTimes = {}
 for (let i = 0; i < incidents.length; i++) {
   let row = incidents[i]
   let station = row.station
-  let time = row.response_time_min
+  let time = Number(row.response_time_min) || 0
 
-  if (!stationTimes[station]) {
-    stationTimes[station] = []
-  }
+  if (!stationTimes[station]) stationTimes[station] = []
   stationTimes[station].push(time)
 }
 
@@ -117,74 +133,67 @@ let stationAvg = []
 for (let station in stationTimes) {
   let times = stationTimes[station]
   let sum = 0
-  for (let i = 0; i < times.length; i++) {
-    sum += times[i]
-  }
-  let avg = sum / times.length
-  stationAvg.push({ station: station, avg_time: avg })
+  for (let i = 0; i < times.length; i++) sum += times[i]
+  stationAvg.push({
+    station: station,
+    avg_time: sum / times.length
+  })
 }
 
 stationAvg.sort((a, b) => a.avg_time - b.avg_time)
 
+let systemAvg = stationAvg.reduce((sum, d) => sum + d.avg_time, 0) / stationAvg.length
+
 let worstStations = [...stationAvg].reverse().slice(0, 5)
 let bestStations = stationAvg.slice(0, 5)
 
-let systemAvg = 0
-for (let i = 0; i < stationAvg.length; i++) {
-  systemAvg += stationAvg[i].avg_time
-}
-systemAvg = systemAvg / stationAvg.length
-
 Plot.plot({
-  title: "Average Incident Response Time by Station",
   width: 900,
-  height: 500,
+  height: 400,
   x: { label: "Response Time (minutes)", grid: true },
   y: { label: "Station" },
   marks: [
-    Plot.barX(incidents, Plot.groupX({ y: "mean" }, { x: "response_time_min", y: "station", fill: "#4299c1", sort: { y: "x", reverse: true } })),
-    
-    Plot.ruleX([systemAvg], { stroke: "crimson", strokeWidth: 2, strokeDasharray: "3,3" }),
-    
-    Plot.text([{ x: systemAvg, y: 5, text: `System avg: ${systemAvg.toFixed(1)} min` }],
-      { x: "x", y: "y", text: "text", fill: "crimson", fontSize: 11, dx: 5 })
+    Plot.barX(incidents, Plot.groupX({ y: "mean" }, {
+      x: "response_time_min",
+      y: "station",
+      fill: "#4299c1",
+      sort: { y: "x", reverse: true }
+    })),
+    Plot.ruleX([systemAvg], {
+      stroke: "red",
+      strokeDasharray: "3,3"
+    }),
+    Plot.text(
+      [{ x: systemAvg, y: 5, text: `System average: ${systemAvg.toFixed(1)} minutes` }],
+      { x: "x", y: "y", text: "text", fill: "red", fontSize: 11, dx: 5 }
+    )
   ]
 })
 
-display("WORST RESPONSE TIMES (need improvement):")
-for (let i = 0; i < worstStations.length; i++) {
-  display(`${i+1}. ${worstStations[i].station}: ${worstStations[i].avg_time.toFixed(1)} minutes`)
+for (let i = 0; i < bestStations.length; i++) {
+  display((i+1) + ". " + bestStations[i].station + ": " + bestStations[i].avg_time.toFixed(1) + " minutes")
 }
 
-display("BEST RESPONSE TIMES:")
-for (let i = 0; i < bestStations.length; i++) {
-  display(`${i+1}. ${bestStations[i].station}: ${bestStations[i].avg_time.toFixed(1)} minutes`)
+for (let i = 0; i < worstStations.length; i++) {
+  let percentAbove = (worstStations[i].avg_time / systemAvg * 100).toFixed(0)
+  display((i+1) + ". " + worstStations[i].station + ": " + worstStations[i].avg_time.toFixed(1) + " minutes (" + percentAbove + "% above average)")
 }
 
 let eventCount = {}
 
 for (let i = 0; i < upcoming_events.length; i++) {
-  let row = upcoming_events[i]
-  let station = row.station_near
-  
-  if (!eventCount[station]) {
-    eventCount[station] = 0
-  }
-  eventCount[station] += 1
+  let station = upcoming_events[i].station_near
+  eventCount[station] = (eventCount[station] || 0) + 1
 }
 
 let incidentCount = {}
+
 for (let i = 0; i < incidents.length; i++) {
   let station = incidents[i].station
   incidentCount[station] = (incidentCount[station] || 0) + 1
 }
 
-let maxIncidents = 0
-for (let station in incidentCount) {
-  if (incidentCount[station] > maxIncidents) {
-    maxIncidents = incidentCount[station]
-  }
-}
+let maxIncidents = Math.max(...Object.values(incidentCount), 1)
 
 let staffingNeed = []
 
@@ -192,8 +201,7 @@ for (let station in eventCount) {
   let events = eventCount[station]
   let staff = currentStaffing[station] || 5
   let incidentsAtStation = incidentCount[station] || 0
-  let incidentRate = incidentsAtStation / (maxIncidents || 1)
-  
+  let incidentRate = incidentsAtStation / maxIncidents
   let needScore = (events * 2) + (incidentRate * 5) - (staff / 4)
   
   staffingNeed.push({
@@ -206,81 +214,64 @@ for (let station in eventCount) {
 }
 
 staffingNeed.sort((a, b) => b.needScore - a.needScore)
+
 let topThree = staffingNeed.slice(0, 3)
 
-let staffingForHexbin = staffingNeed.map((s, idx) => ({
-  x: s.needScore * 8,
-  y: s.events * 12,
-  station: s.station,
-  events: s.events,
-  staff: s.staff,
-  incidents: s.incidents,
-  needScore: s.needScore
-}))
-
 Plot.plot({
-  title: "Staffing Need Analysis - Hexbin Transform",
   width: 900,
-  height: 450,
-  x: { label: "Need Score (scaled)", grid: true },
-  y: { label: "Number of Events (scaled)", grid: true },
+  height: 400,
+  x: { label: "Station", tickRotate: 45 },
+  y: { label: "Need Score (higher = more urgent)", grid: true },
   marks: [
-    Plot.hexbin(staffingForHexbin, {
-      x: "x",
-      y: "y",
-      fill: "count",
-      tip: true,
-      stroke: "white",
-      strokeWidth: 0.5
+    Plot.barY(staffingNeed, {
+      x: "station",
+      y: "needScore",
+      fill: "#e67e22",
+      sort: { x: "y", reverse: true }
     }),
-    
-    Plot.dot(staffingForHexbin, {
-      x: "x",
-      y: "y",
-      stroke: "black",
-      fill: "white",
-      r: 4,
-      tip: true,
-      title: d => `${d.station}: Need score ${d.needScore.toFixed(1)}`
-    }),
-    
-    Plot.text(topThree.map(s => {
-      let found = staffingForHexbin.find(d => d.station === s.station)
-      return { ...found, station: s.station }
-    }), {
-      x: "x",
-      y: d => d.y + 3,
-      text: "station",
-      fill: "darkred",
-      fontSize: 10,
-      fontWeight: "bold"
-    }),
-    
-    Plot.rect([{ x1: 35, y1: 25, x2: 70, y2: 45 }], {
-      x1: "x1",
-      x2: "x2",
-      y1: "y1",
-      y2: "y2",
-      fill: null,
+    Plot.ruleY([topThree[2].needScore], {
       stroke: "red",
-      strokeWidth: 2,
-      strokeDasharray: "5,3"
-    }),
-    
-    Plot.text([{ x: 40, y: 48, text: "▲ High priority cluster" }], {
-      x: "x",
-      y: "y",
-      text: "text",
-      fill: "red",
-      fontSize: 11,
-      fontWeight: "bold"
+      strokeWidth: 1.5,
+      strokeDasharray: "4,2"
     })
   ]
 })
 
-display("TOP 3 STATIONS NEEDING STAFFING HELP:")
 for (let i = 0; i < topThree.length; i++) {
   let s = topThree[i]
-  display(`${i+1}. ${s.station}: ${s.events} upcoming events, ${s.incidents} past incidents, only ${s.staff} current staff`)
-})
+  display((i+1) + ". " + s.station + ": " + s.events + " upcoming events, " + s.incidents + " past incidents, only " + s.staff + " staff members")
+}
+
+let stationAvgMap = new Map()
+
+for (let i = 0; i < stationAvg.length; i++) {
+  stationAvgMap.set(stationAvg[i].station, stationAvg[i].avg_time)
+}
+
+let bonusScores = []
+
+for (let i = 0; i < staffingNeed.length; i++) {
+  let s = staffingNeed[i]
+  let responseTime = stationAvgMap.get(s.station) || 5
+  let bonusScore = s.needScore * (responseTime / 3)
+  bonusScores.push({
+    station: s.station,
+    events: s.events,
+    staff: s.staff,
+    incidents: s.incidents,
+    needScore: s.needScore,
+    responseTime: responseTime,
+    bonusScore: bonusScore
+  })
+}
+
+bonusScores.sort((a, b) => b.bonusScore - a.bonusScore)
+
+let topPriority = bonusScores[0]
+
+display("PRIORITY STATION: " + topPriority.station)
+display("")
+display("Why: " + topPriority.events + " major events in Summer 2026, response time of " + topPriority.responseTime.toFixed(1) + " minutes, only " + topPriority.staff + " current staff members")
+display("")
+display("Recommendation: Add 5-7 temporary staff members during event days")
 ```
