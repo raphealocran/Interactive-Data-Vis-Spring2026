@@ -281,6 +281,6 @@ Plot.plot({
 display("TOP 3 STATIONS NEEDING STAFFING HELP:")
 for (let i = 0; i < topThree.length; i++) {
   let s = topThree[i]
-  display(`${i+1}. ${s.station}: ${s. events} upcoming events, ${s.incidents} past incidents, only ${s.staff} current staff`)
+  display(`${i+1}. ${s.station}: ${s.events} upcoming events, ${s.incidents} past incidents, only ${s.staff} current staff`)
 })
 ```
