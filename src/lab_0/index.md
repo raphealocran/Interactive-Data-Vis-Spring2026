@@ -20,32 +20,19 @@ code block
 </thead>
 <tbody>
 <tr>
-<td>Name</td>
-<td>Rapheal Ocran</td>
-</tr>
-<tr>
-<td>Location</td>
-<td>New York</td>
-</tr>
-<tr>
-<td>School</td>
-<td>CUNY</td>
-</tr>
-<tr>
-<td>Course</td>
-<td>Interactive Data Visualization</td>
-</tr>
-<tr>
-<td>Interests</td>
-<td>Data visualization, coding, interactive design</td>
+<td><img src="https://images.pexels.com/photos/13571548/pexels-photo-13571548.jpeg" style="border-radius: 12px; max-width: 160px;"></td>
+<td>
+<strong>Rapheal Ocran</strong><br>
+New York<br>
+CUNY<br>
+Interactive Data Visualization<br>
+Data visualization, coding, interactive design
+</td>
 </tr>
 <tr>
 <td colspan="2" style="text-align: center;">
-<a href="https://github.com/raphealocran" target="_blank"> My GitHub Profile</a>
+<a href="https://github.com/raphealocran" target="_blank">🔗 My GitHub Profile</a>
 </td>
 </tr>
 </tbody>
 </table>
-
-<img src="https://via.placeholder.com/160" 
-     style="border-radius: 12px; max-width: 160px; margin: 12px 0;">
