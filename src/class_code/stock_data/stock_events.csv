@@ -1,0 +1,47 @@
+Date,Event Name,Related Tickers,Assumed Impact,Notes
+2013-09-20,iOS 7 Launch,AAPL,Positive,Major iPhone design overhaul drove sales
+2014-09-09,iPhone 6 Launch,AAPL,Positive,Larger screen sizes expanded market appeal
+2015-08-24,China Market Concerns,AAPL|AMZN|GOOG|META|NFLX,Negative,Chinese stock market crash affected tech stocks
+2016-01-01,iPhone Sales Slowdown Concerns,AAPL,Negative,First-ever decline in iPhone sales reported
+2016-11-09,Trump Election,AAPL|AMZN|GOOG|META|NFLX,Positive,Pro-business policies expected; tech rally
+2017-09-12,iPhone X Launch,AAPL,Positive,$1000 smartphone broke price barriers
+2018-01-01,Tax Reform Impact,AAPL|AMZN|GOOG|META|NFLX,Positive,Corporate tax cuts benefited big tech
+2018-03-01,Cambridge Analytica Scandal,META,Negative,Facebook data privacy concerns emerged
+2018-10-01,Interest Rate Concerns,AAPL|AMZN|GOOG|META|NFLX,Negative,Fed rate hikes worried growth stock investors
+2018-12-24,Christmas Eve Selloff,AAPL|AMZN|GOOG|META|NFLX,Negative,Apple revenue warning and broader market fears
+2019-01-02,Apple Revenue Warning,AAPL,Negative,iPhone sales weakness in China
+2019-06-01,Trade War Escalation,AAPL|AMZN,Negative,US-China tensions affected supply chains
+2019-10-01,Antitrust Investigations Begin,GOOG|META|AMZN,Negative,DOJ and state AGs launch probes into big tech
+2020-02-19,COVID-19 Peak Pre-Crash,AAPL|AMZN|GOOG|META|NFLX,Negative,Market peak before pandemic recognition
+2020-03-23,COVID-19 Market Bottom,AAPL|AMZN|GOOG|META|NFLX,Negative,Peak pandemic fear and economic uncertainty
+2020-04-01,Stay-at-Home Rally Begins,NFLX|AMZN,Positive,Streaming and e-commerce demand surged
+2020-07-31,Big Tech Earnings Blowout,AAPL|AMZN|GOOG|META,Positive,Pandemic accelerated digital transformation
+2020-08-31,Apple Stock Split,AAPL,Positive,4-for-1 split increased accessibility
+2020-09-03,Tech Selloff,AAPL|AMZN|GOOG|META|NFLX,Negative,Profit-taking after massive summer rally
+2020-11-09,Pfizer Vaccine News,AAPL|AMZN|GOOG|META|NFLX,Mixed,Rotation from growth to value stocks
+2021-01-06,Georgia Senate Runoffs,AAPL|AMZN|GOOG|META|NFLX,Mixed,Democratic control raised regulatory concerns
+2021-02-01,GameStop/Meme Stock Volatility,AAPL|AMZN|GOOG|META|NFLX,Negative,Broader market volatility affected tech
+2021-09-01,Peak Pandemic Valuations,AAPL|AMZN|GOOG|META|NFLX,Positive,Tech stocks hit all-time highs
+2021-11-01,Metaverse Announcement,META,Mixed,Facebook rebrands to Meta; investor skepticism
+2022-01-01,Fed Rate Hike Cycle Begins,AAPL|AMZN|GOOG|META|NFLX,Negative,Rising rates hurt growth stock valuations
+2022-02-24,Russia Invades Ukraine,AAPL|AMZN|GOOG|META|NFLX,Negative,Geopolitical uncertainty and market volatility
+2022-04-01,Netflix Subscriber Loss,NFLX,Negative,First subscriber decline shocked streaming sector
+2022-05-01,Tech Earnings Disappointments,AAPL|META,Negative,Apple supply issues; Meta ad revenue concerns
+2022-06-16,Fed 75 Basis Point Hike,AAPL|AMZN|GOOG|META|NFLX,Negative,Aggressive rate increase spooked markets
+2022-10-24,Meta's Reality Labs Losses,META,Negative,$9.4B quarterly loss on metaverse investments
+2022-11-01,Midterm Election Uncertainty,AAPL|AMZN|GOOG|META|NFLX,Negative,Political and economic uncertainty
+2022-12-01,Tech Layoff Wave Begins,META|AMZN,Negative,Meta, Amazon announce major job cuts
+2023-01-01,2023 Recovery Begins,AAPL|AMZN|GOOG|META|NFLX,Positive,Inflation cooling; tech oversold
+2023-02-01,ChatGPT Goes Viral,GOOG|META|AMZN,Positive,AI revolution sparks tech optimism
+2023-03-13,Silicon Valley Bank Collapse,AAPL|AMZN|GOOG|META|NFLX,Negative,Banking crisis rattled tech sector
+2023-05-01,AI Infrastructure Boom,GOOG|AMZN|META,Positive,Cloud providers benefit from AI demand
+2023-07-26,Meta's Threads Launch,META,Positive,Twitter competitor gained 100M users quickly
+2023-11-01,OpenAI Leadership Drama,GOOG|META,Mixed,Sam Altman fired then rehired; AI uncertainty
+2024-01-01,AI Monetization Focus,GOOG|AMZN|META,Positive,Companies demonstrate AI revenue potential
+2024-02-01,Magnificent Seven Rally,AAPL|AMZN|GOOG|META,Positive,Big tech drove market gains
+2024-03-01,Antitrust Cases Advance,GOOG|AAPL,Mixed,DOJ cases against Google and Apple
+2024-07-01,Tech Earnings Strength,AAPL|AMZN|GOOG|META|NFLX,Positive,Strong Q2 results across mega-cap tech
+2024-08-05,Yen Carry Trade Unwind,AAPL|AMZN|GOOG|META|NFLX,Negative,Global market volatility hit tech stocks
+2024-09-01,AI Capex Concerns,GOOG|AMZN|META,Mixed,Questions about returns on massive AI spending
+2024-10-01,Election Positioning,AAPL|AMZN|GOOG|META|NFLX,Mixed,Investors position for November election
+2025-01-20,Trump Inauguration,AAPL|AMZN|GOOG|META|NFLX,Mixed,Policy uncertainty around tariffs and regulation
