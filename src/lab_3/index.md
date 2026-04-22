@@ -11,259 +11,244 @@ const nyc = await FileAttachment("data/nyc.json").json();
 const results = await FileAttachment("data/election_results.csv").csv({ typed: true });
 const survey = await FileAttachment("data/survey_responses.csv").csv({ typed: true });
 const events = await FileAttachment("data/campaign_events.csv").csv({ typed: true });
-
-// Note: you don't have to keep this, but some helpful data exposure to see what we've loaded. 
-// NYC geoJSON data
-display(nyc)
-// Campaign data (first 10 objects)
-display(results.slice(0,10))
-display(survey.slice(0,10))
-display(events.slice(0,10))
 ```
 
 
 ```js
-// The nyc file is saved in data as a topoJSON instead of a geoJSON. Thats primarily for size reasons -- it saves us 3MB of data. For Plot to render it, we have to convert it back to its geoJSON feature collection. 
 const districts = topojson.feature(nyc, nyc.objects.districts)
-display(districts)
 ```
 
 ```js
-// Simple rendering of the NYC districts topoJSON
-Plot.plot({
-  // this projection is already zoomed into NYC
-  projection: {
-    domain: districts,
-    type: "mercator",
-  },
-  marks: [
-    Plot.geo(districts),
-  ]
-})
-
-// Process election results correctly - each row has Adams, Wiley, Garcia, Yang columns
+// Aggregate election results
 const resultsByDistrict = d3.rollup(
   results,
   v => ({
-    adams_total: d3.sum(v, d => +d.Adams || 0),
-    wiley_total: d3.sum(v, d => +d.Wiley || 0),
-    garcia_total: d3.sum(v, d => +d.Garcia || 0),
-    yang_total: d3.sum(v, d => +d.Yang || 0),
-    total_votes: d3.sum(v, d => (+d.Adams || 0) + (+d.Wiley || 0) + (+d.Garcia || 0) + (+d.Yang || 0))
+    candidate_votes: d3.sum(v, d => d.votes_candidate || 0),
+    opponent_votes: d3.sum(v, d => d.votes_opponent || 0),
+    registered_voters: d3.sum(v, d => d.total_registered_voters || 0),
+    turnout_rate: d3.mean(v, d => d.turnout_rate || 0),
+    gotv_doors_knocked: d3.sum(v, d => d.gotv_doors_knocked || 0),
+    candidate_hours_spent: d3.sum(v, d => d.candidate_hours_spent || 0),
+    median_household_income: d3.mean(v, d => d.median_household_income || 0)
   }),
-  d => String(d.district)
+  d => d.boro_cd
 );
 
-// Convert to usable array and calculate winner per district
+// Convert to array + determine winner
 const districtData = Array.from(resultsByDistrict, ([district, values]) => {
   const votes = {
-    Adams: values.adams_total,
-    Wiley: values.wiley_total,
-    Garcia: values.garcia_total,
-    Yang: values.yang_total
+    Candidate: values.candidate_votes,
+    Opponent: values.opponent_votes
   };
-  const winner = Object.keys(votes).reduce((a, b) => votes[a] > votes[b] ? a : b);
+
+  const winner = Object.keys(votes).reduce((a, b) =>
+    votes[a] > votes[b] ? a : b
+  );
+
   const winner_votes = votes[winner];
-  
+
   return {
     district,
     winner,
-    winner_share: (winner_votes / values.total_votes) * 100,
-    total_votes: values.total_votes,
-    adams_share: (values.adams_total / values.total_votes) * 100,
-    wiley_share: (values.wiley_total / values.total_votes) * 100,
-    garcia_share: (values.garcia_total / values.total_votes) * 100,
-    yang_share: (values.yang_total / values.total_votes) * 100
+    winner_share: values.total_votes ? (winner_votes / values.total_votes) * 100 : 0,
+    candidate_share: values.total_votes ? (values.candidate_votes / values.total_votes) * 100 : 0,
+    candidate_votes: values.candidate_votes,
+    opponent_votes: values.opponent_votes,
+    total_votes: values.candidate_votes + values.opponent_votes,
+    registered_voters: values.registered_voters,
+    turnout_rate: values.turnout_rate,
+    gotv_doors_knocked: values.gotv_doors_knocked,
+    candidate_hours_spent: values.candidate_hours_spent,
+    median_household_income: values.median_household_income
   };
 });
 
-// Merge with geoJSON for choropleth map
+// Create fast lookup map (better than .find)
+const districtMap = new Map(
+  districtData.map(d => [d.district, d])
+);
+
+// Merge with geoJSON
 const geoWithData = {
   ...districts,
   features: districts.features.map(f => {
-    const match = districtData.find(d => d.district == f.properties.district);
+    const key = f.properties.BoroCD;
+    const match = districtMap.get(key);
+
     return {
       ...f,
       properties: {
         ...f.properties,
+        district: key,
         winner: match ? match.winner : "Unknown",
         winner_share: match ? match.winner_share : 0,
-        total_votes: match ? match.total_votes : 0
+        candidate_share: match ? match.candidate_share : 0,
+        total_votes: match ? match.total_votes : 0,
+        candidate_votes: match ? match.candidate_votes : 0,
+        opponent_votes: match ? match.opponent_votes : 0,
+        turnout_rate: match ? match.turnout_rate : 0
       }
     };
   })
 };
 
-// Visualization 1: Choropleth map showing winners by district
-Plot.plot({
+display(Plot.plot({
   title: "District Winners by Candidate",
   projection: {
     domain: districts,
     type: "mercator",
   },
   color: {
-    scheme: "category10",
-    domain: ["Adams", "Wiley", "Garcia", "Yang"],
-    label: "Winner"
+    scheme: "set2",
+    domain: ["Candidate", "Opponent"],
+    label: "Winner",
+    legend: true
   },
   marks: [
     Plot.geo(geoWithData, {
       fill: d => d.properties.winner,
       stroke: "white",
       tip: true,
-      title: d => `District ${d.properties.district}\nWinner: ${d.properties.winner}\nShare: ${d.properties.winner_share.toFixed(1)}%`
-    }),
-    Plot.text(geoWithData.features, {
-      geometry: d => d,
-      text: d => d.properties.district,
-      fill: "white",
-      fontSize: 8,
-      filter: d => d.properties.winner !== "Unknown"
+      title: d =>
+        `District ${d.properties.district}
+Winner: ${d.properties.winner}
+Candidate share: ${d.properties.candidate_share.toFixed(1)}%
+Turnout: ${d.properties.turnout_rate.toFixed(1)}%`
     })
   ]
-})
+}))
 
-// Calculate citywide totals for bar chart
 const citywideTotals = [
-  { candidate: "Adams", votes: d3.sum(results, d => +d.Adams || 0) },
-  { candidate: "Wiley", votes: d3.sum(results, d => +d.Wiley || 0) },
-  { candidate: "Garcia", votes: d3.sum(results, d => +d.Garcia || 0) },
-  { candidate: "Yang", votes: d3.sum(results, d => +d.Yang || 0) }
+  { candidate: "Candidate", votes: d3.sum(results, d => d.votes_candidate || 0) },
+  { candidate: "Opponent", votes: d3.sum(results, d => d.votes_opponent || 0) }
 ];
 
-// Visualization 2: Bar chart of total votes by candidate
-Plot.plot({
-  title: "Total Votes by Candidate (Citywide)",
-  width: 600,
-  height: 400,
-  x: {
-    label: "Candidate"
+display(Plot.plot({
+  title: "Citywide Vote Total",
+  x: { label: "Candidate" },
+  color: {
+    domain: ["Candidate", "Opponent"],
+    range: ["#4e79a7", "#e15759"]
   },
-  y: {
-    label: "Votes",
-    grid: true
-  },
+  y: { label: "Votes", grid: true, tickFormat: "," },
   marks: [
+    Plot.ruleY([0]),
     Plot.barY(citywideTotals, {
       x: "candidate",
       y: "votes",
       fill: "candidate",
-      tip: true,
-      title: d => `${d.candidate}: ${d.votes.toLocaleString()} votes`
+      tip: true
+    }),
+    Plot.text(citywideTotals, {
+      x: "candidate",
+      y: "votes",
+      text: d => d3.format(",")(d.votes),
+      dy: -10,
+      fontWeight: "bold"
     })
   ]
-})
+}))
 
-// Process survey data for issue importance (no income column, using issue ratings instead)
 const surveyByDistrict = d3.rollup(
   survey,
   v => ({
-    safety: d3.mean(v, d => d.public_safety === "Not sure" ? null : +d.public_safety),
-    housing: d3.mean(v, d => d.housing_affordability === "Not sure" ? null : +d.housing_affordability),
-    education: d3.mean(v, d => d.education === "Not sure" ? null : +d.education),
-    gotv_contact_rate: d3.mean(v, d => d.gotv_contact === "Yes" ? 1 : 0) * 100
+    housing: d3.mean(v, d => d.affordable_housing_alignment),
+    transit: d3.mean(v, d => d.public_transit_alignment),
+    childcare: d3.mean(v, d => d.childcare_support_alignment),
+    small_business: d3.mean(v, d => d.small_business_tax_alignment),
+    police_reform: d3.mean(v, d => d.police_reform_alignment)
   }),
-  d => String(d.district)
+  d => d.boro_cd
 );
 
-// Merge survey data with election results
 const combined = districtData.map(d => ({
   district: d.district,
   winner: d.winner,
-  winner_share: d.winner_share,
-  safety_importance: surveyByDistrict.get(d.district)?.safety || 0,
-  housing_importance: surveyByDistrict.get(d.district)?.housing || 0,
-  education_importance: surveyByDistrict.get(d.district)?.education || 0,
-  gotv_contact_rate: surveyByDistrict.get(d.district)?.gotv_contact_rate || 0
+  housing: surveyByDistrict.get(d.district)?.housing || 0,
+  transit: surveyByDistrict.get(d.district)?.transit || 0,
+  childcare: surveyByDistrict.get(d.district)?.childcare || 0,
+  small_business: surveyByDistrict.get(d.district)?.small_business || 0,
+  police_reform: surveyByDistrict.get(d.district)?.police_reform || 0
 }));
 
-// Visualization 3: Issue importance by district winner
 const issueData = combined.flatMap(d => [
-  { winner: d.winner, issue: "Public Safety", rating: d.safety_importance },
-  { winner: d.winner, issue: "Housing", rating: d.housing_importance },
-  { winner: d.winner, issue: "Education", rating: d.education_importance }
+  { winner: d.winner, issue: "Housing", rating: d.housing },
+  { winner: d.winner, issue: "Transit", rating: d.transit },
+  { winner: d.winner, issue: "Childcare", rating: d.childcare },
+  { winner: d.winner, issue: "Small Business", rating: d.small_business },
+  { winner: d.winner, issue: "Police Reform", rating: d.police_reform }
 ]).filter(d => d.rating > 0);
 
-Plot.plot({
-  title: "Issue Importance by District Winner (1-5 scale)",
-  width: 650,
-  height: 400,
-  y: { 
-    label: "Average Importance Rating", 
-    grid: true, 
-    domain: [3, 5] 
-  },
-  x: { 
-    label: "Issue" 
-  },
-  color: { 
-    legend: true, 
-    label: "Winner" 
-  },
+const issueSummary = d3.rollups(
+  issueData,
+  v => d3.mean(v, d => d.rating),
+  d => d.issue
+).map(([issue, rating]) => ({ issue, rating }));
+
+display(Plot.plot({
+  title: "Average Survey Alignment by Issue",
+  y: { label: "Average rating (1-5)", grid: true, domain: [0, 5] },
+  x: { label: "Issue" },
   marks: [
-    Plot.barY(issueData, {
+    Plot.ruleY([0]),
+    Plot.barY(issueSummary, {
       x: "issue",
       y: "rating",
-      fill: "winner",
-      position: "dodge",
-      tip: true,
-      title: d => `${d.winner} Districts\n${d.issue}: ${d.rating.toFixed(1)}/5`
+      fill: "#76b7b2",
+      tip: true
+    }),
+    Plot.text(issueSummary, {
+      x: "issue",
+      y: "rating",
+      text: d => d.rating.toFixed(1),
+      dy: -10,
+      fontWeight: "bold"
     })
   ]
-})
+}))
 
-// Process campaign events by district (events data has district, date, type, attendance)
 const eventsByDistrict = d3.rollup(
   events,
-  v => v.length,
-  d => String(d.district)
+  v => ({
+    events: v.length,
+    attendance: d3.sum(v, d => d.estimated_attendance || 0)
+  }),
+  d => d.boro_cd
 );
 
-// Create GOTV analysis data
 const gotvData = districtData.map(d => ({
   district: d.district,
-  events: eventsByDistrict.get(d.district) || 0,
-  turnout: d.total_votes,
+  events: eventsByDistrict.get(d.district)?.events || 0,
+  attendance: eventsByDistrict.get(d.district)?.attendance || 0,
+  turnout: d.turnout_rate,
   winner: d.winner,
-  winner_share: d.winner_share,
-  gotv_contact_rate: surveyByDistrict.get(d.district)?.gotv_contact_rate || 0
+  candidate_share: d.candidate_share
 }));
 
-// Visualization 4: GOTV events vs voter turnout
-Plot.plot({
-  title: "Campaign Events vs Voter Turnout by District",
-  width: 650,
-  height: 450,
-  x: { 
-    label: "Number of Campaign Events", 
-    grid: true,
-    ticks: [0, 1, 2, 3, 4, 5]
-  },
-  y: { 
-    label: "Total Voter Turnout", 
-    grid: true 
-  },
-  color: { 
-    scheme: "category10", 
-    legend: true, 
-    label: "Winner" 
+display(Plot.plot({
+  title: "Campaign Events and Turnout",
+  x: { label: "Events", grid: true },
+  y: { label: "Turnout rate (%)", grid: true },
+  color: {
+    domain: ["Candidate", "Opponent"],
+    range: ["#4e79a7", "#e15759"],
+    legend: true
   },
   marks: [
     Plot.dot(gotvData, {
       x: "events",
       y: "turnout",
       fill: "winner",
-      r: 8,
+      r: 5,
       opacity: 0.7,
-      tip: true,
-      title: d => `District ${d.district}\nEvents: ${d.events}\nTurnout: ${d.turnout.toLocaleString()}\nGOTV Contact: ${d.gotv_contact_rate.toFixed(1)}%\nWinner: ${d.winner} (${d.winner_share.toFixed(1)}%)`
+      tip: true
     }),
-    Plot.linearRegressionY(gotvData, { 
-      x: "events", 
-      y: "turnout", 
-      stroke: "gray", 
-      strokeDash: "2,2" 
+    Plot.linearRegressionY(gotvData, {
+      x: "events",
+      y: "turnout",
+      stroke: "gray",
+      strokeDash: "4,2"
     })
   ]
-})
+}))
 ```
