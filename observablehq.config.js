@@ -11,16 +11,49 @@ export default {
     {
       name: "Lessons",
       pages: [
-        { name: "Intro to Web Development", path: "/lessons/1_intro_to_web_development" },
+        {
+          name: "Intro to Web Development",
+          path: "/lessons/1_intro_to_web_development",
+        },
         { name: "Working in Cursor", path: "/lessons/2_working_in_cursor" },
-        { name: "Intro to Observable Framework", path: "/lessons/3_intro_to_observable_framework" },
-        { name: "Confirming Spring Upstream", path: "/lessons/4_confirming_spring_upstream" },
-        { name: "Intro to Observable Plot", path: "/lessons/5_intro_to_observable_plot" },
-        { name: "Transforms and Data Manipulation", path: "/lessons/6_transforms_and_data_manipulation" },
-        { name: "Data Types, Scales, Marks", path: "/lessons/7_data_types_scales_marks" },
-        { name: "Data Joins and Annotations", path: "/lessons/8_data_joins_and_annotations" },
+        {
+          name: "Intro to Observable Framework",
+          path: "/lessons/3_intro_to_observable_framework",
+        },
+        {
+          name: "Confirming Spring Upstream",
+          path: "/lessons/4_confirming_spring_upstream",
+        },
+        {
+          name: "Intro to Observable Plot",
+          path: "/lessons/5_intro_to_observable_plot",
+        },
+        {
+          name: "Transforms and Data Manipulation",
+          path: "/lessons/6_transforms_and_data_manipulation",
+        },
+        {
+          name: "Data Types, Scales, Marks",
+          path: "/lessons/7_data_types_scales_marks",
+        },
+        {
+          name: "Data Joins and Annotations",
+          path: "/lessons/8_data_joins_and_annotations",
+        },
         { name: "Faceting and SVGs", path: "/lessons/9_faceting_and_svgs" },
-      ]
+        {
+          name: "Libraries and Imports",
+          path: "/lessons/10_libraries_and_imports",
+        },
+        {
+          name: "Intro to d3.js",
+          path: "/lessons/11_intro_to_d3",
+        },
+        {
+          name: "Different Charts With d3.js",
+          path: "/lessons/12_charts_in_d3",
+        },
+      ],
     },
     {
       name: "Lab 0: Getting Started",
@@ -58,11 +91,10 @@ export default {
       name: "Lab 4: Clearwater Crisis",
       open: false,
       pages: [
-        // { name: "Instructions", path: "/lab_4/readme" },
-        // { name: "Dashboard", path: "/lab_4/index" },
+        { name: "Instructions", path: "/lab_4/readme" },
+        { name: "Dashboard", path: "/lab_4/index" },
       ],
-    }
-
+    },
   ],
 
   // Content to add to the head of the page, e.g. for a favicon:
